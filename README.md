@@ -4,5 +4,6 @@ Original input text is translated to english for the best performance of Chatbot
 
 # Usage
 ```
+pip install -r requirements.txt
 uvicorn main:app --reload
 ```
