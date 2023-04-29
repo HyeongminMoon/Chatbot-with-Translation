@@ -16,7 +16,7 @@ hash_candidates = string.ascii_letters + string.digits
 generate_model = "databricks/dolly-v2-12b"
 
 class DefaultTS():
-    ts_tool = "papago"
+    ts_tool = "google"
     back_ts_tool = "google"
 
 
@@ -32,6 +32,9 @@ def save_result(result: dict):
     now = datetime.now()
     date_string = now.strftime("%Y%m%d_%H%M%S")
     hashes = "".join(random.choice(hash_candidates) for _ in range(4))
+
+    if not os.path.exists(result_save_dir):
+        os.makedirs(result_save_dir)
 
     with open(os.path.join(result_save_dir, date_string + hashes + ".json"), "w") as f:
         json.dump(result, f, ensure_ascii=False, indent=4)

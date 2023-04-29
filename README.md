@@ -1,15 +1,32 @@
 # Chatbot-with-Translation
 
-Chatbot with Translation.
+Chatbot with Translation. Using [databricks/dolly-v2-12b](https://huggingface.co/databricks/dolly-v2-12b)
 
 Original input text is translated to english for the best performance of Chatbot, and translated back to original language.
+
+# Install
+
+You might need 24GB+ GPU.
+If you want to run smaller model, try to find language model in https://huggingface.co/
+and change the model in `main.py:16`.
+
+```python
+...
+generate_model = "{huggingface model}"
+...
+```
+
+```bash
+pip install -r requirements.txt
+```
 
 # Usage
 
 ```
-pip install -r requirements.txt
 uvicorn main:app --reload
 ```
+
+It might take 2~5 min at first.
 
 # Example
 
