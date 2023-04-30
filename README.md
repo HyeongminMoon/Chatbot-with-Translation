@@ -22,11 +22,22 @@ pip install -r requirements.txt
 
 # Usage
 
-```
-uvicorn main:app --reload
+### Single Question & Answering
+
+```bash
+uvicorn single:app --reload
 ```
 
 It might take 2~5 min at first.
+
+### Chatbot mode
+
+You need langchain to run chatbot mode.
+
+```bash
+pip install langchain
+uvicorn chatbot:app --reload
+```
 
 # Example
 

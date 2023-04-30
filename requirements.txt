@@ -5,3 +5,4 @@ uvicorn
 pydantic
 translators
 langdetect
+#langchain #for chatbot mode
