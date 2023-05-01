@@ -8,7 +8,7 @@ Original input text is translated to english for the best performance of Chatbot
 
 You might need 24GB+ GPU.
 If you want to run smaller model, try to find language model in https://huggingface.co/
-and change the model in `main.py:16`.
+and change the model in `single.py`.
 
 ```python
 ...
@@ -19,6 +19,8 @@ generate_model = "{huggingface model}"
 ```bash
 pip install -r requirements.txt
 ```
+
+The smaller model for chatbot-mode is a little more demanding. You will need to change the model in `chatbot.py` and also prepare suitable langchain pipeline.
 
 # Usage
 
