@@ -68,3 +68,15 @@ result:
 9. 야구
 10. 탁구
 ```
+
+```bash
+Human:  プロセスマイニングとは？
+result:
+ データをマイニングするときは、関心のあるアクション（たとえば、質問に答える、パターンを発見する、または構造を特定する）を指定します。ソフトウェアは、データの収集と分析のプロセスを自動化して、申し立ての証拠を見つけます。
+
+
+translated question:
+ What is process mining?
+original result:
+When you mine data, you specify an action of interest (e.g., answer a question, discover a pattern, or identify a structure) and the software automates the process of collecting and analyzing data to find a proof of the allegation.
+```
