@@ -34,7 +34,7 @@ prompt = PromptTemplate(
 )
 
 class DefaultTS():
-    ts_tool = "papago"
+    ts_tool = "google"
     back_ts_tool = "google"
 
 
