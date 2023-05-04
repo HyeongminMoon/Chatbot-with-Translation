@@ -69,6 +69,8 @@ result:
 10. 탁구
 ```
 
+### Japanese Translated Example
+
 ```bash
 Human:  プロセスマイニングとは？
 result:
@@ -79,4 +81,18 @@ translated question:
  What is process mining?
 original result:
 When you mine data, you specify an action of interest (e.g., answer a question, discover a pattern, or identify a structure) and the software automates the process of collecting and analyzing data to find a proof of the allegation.
+```
+
+### Urdu Translated Example
+
+```bash
+Human:  ٹیلی فون کس نے ایجاد کیا؟
+result:
+ ٹیلیفون کے تصور کی ایجاد 1876 میں الیگزینڈر گراہم بیل نے کی تھی۔ پہلا ورکنگ ٹیلیفون 1877 میں تھامس ایڈیسن نے تعمیر کیا تھا۔ ٹیلیفون نے صوتی پیغامات بھیجنے اور وصول کرنے کا تقریبا مفت طریقہ فراہم کرکے مواصلات میں انقلاب برپا کردیا اور 20 ویں صدی میں گھروں اور کاروباروں میں جلدی سے ہر جگہ عام ہوگیا۔ ٹیلیفون کی صلاحیتوں میں موبائل اور فکسڈ براڈ بینڈ نیٹ ورکس پر ٹیکسٹ میسجنگ ، ویڈیو کانفرنسنگ ، انٹرنیٹ تک رسائی ، اور دیگر صلاحیتوں کو شامل کرنے میں اضافہ ہوا ہے۔
+
+
+translated question:
+ Who invented the telephone?
+original result:
+Invention of the telephone concept was done by Alexander Graham Bell in 1876.  The first working telephone was built in 1877 by Thomas Edison.  The telephone revolutionized communications by providing a nearly free way to send and receive voice messages and quickly became ubiquitous in homes and businesses throughout the 20th century. The telephones capabilities have grown to include text messaging, video conferencing, Internet access, and other capabilities over mobile and fixed broadband networks.
 ```
