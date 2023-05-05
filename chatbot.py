@@ -1,6 +1,5 @@
 import torch
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Request
 import translators as ts
 import json
 import os
@@ -14,32 +13,18 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
 )
-from langchain import PromptTemplate, LLMChain
-from langchain.memory import ConversationBufferWindowMemory
+from langchain import LLMChain
 from langchain.llms import HuggingFacePipeline
+
 from pipelines.dolly.generate import InstructionTextGenerationPipeline
+from pipelines.base.defines import DefaultTS, PromptData
+from pipelines.base.memory import ChatbotMemory
+from pipelines.base.prompt_template import chatbot_prompt
 
 app = FastAPI()
 result_save_dir = "test_results"
 hash_candidates = string.ascii_letters + string.digits
 generate_model = "databricks/dolly-v2-12b"
-
-template = """
-{history}
-Human: {human_input}
-AI:"""
-prompt = PromptTemplate(
-    input_variables=["history", "human_input"],
-    template=template
-)
-
-class DefaultTS():
-    ts_tool = "google"
-    back_ts_tool = "google"
-
-
-class PromptData(BaseModel):
-    text: str
 
 
 def check_lang(text: str):
@@ -76,17 +61,15 @@ def startup_event():
     hf_pipeline = HuggingFacePipeline(pipeline=pipe)
     chat_chain = LLMChain(
         llm=hf_pipeline,
-        prompt=prompt,
-        # verbose=True,
-        memory=ConversationBufferWindowMemory(k=2),
+        prompt=chatbot_prompt,
     )
-    ts.preaccelerate()
+    # ts.preaccelerate()
     ts_pool = ts.translators_pool
     STARTUP = True
 
 
 @app.post("/predict/{ts_tool}")
-def predict(data: PromptData, ts_tool: str, back_ts_tool: str = None):
+def predict(data: PromptData, request: Request, ts_tool: str, back_ts_tool: str = None):
     if not STARTUP:
         return {"error": "Sever is starting. It takes ~2min for optimization."}
     if ts_tool not in ts_pool:
@@ -94,20 +77,25 @@ def predict(data: PromptData, ts_tool: str, back_ts_tool: str = None):
     if back_ts_tool is None:
         back_ts_tool = ts_tool
     try:
+        user_id = request.client.host
         ori_lang = check_lang(data.text)
         result = {}
         if ori_lang == 'en':
-            output = chat_chain.predict(human_input=data.text)
+            history = ChatbotMemory.load_context(user_id)['history']
+            output = chat_chain.predict(human_input=data.text, history=history)
+            ChatbotMemory.save_context(user_id, data.text, output)
             result["generated_text"] = output
         else:
             q_text = data.text
             ts_text = ts.translate_text(
-                q_text, translator=DefaultTS.ts_tool, if_use_preacceleration=True,
+                q_text, translator=DefaultTS.ts_tool, if_use_preacceleration=False,
                 to_language='en', timeout=10
             )
-            gen_text = chat_chain.predict(human_input=ts_text)
+            history = ChatbotMemory.load_context(user_id)['history']
+            gen_text = chat_chain.predict(human_input=ts_text, history=history)
+            ChatbotMemory.save_context(user_id, ts_text, gen_text)
             ts_gen_text = ts.translate_text(
-                gen_text, translator=ts_tool, if_use_preacceleration=True,
+                gen_text, translator=ts_tool, if_use_preacceleration=False,
                 from_language='en', to_language=ori_lang, timeout=10
             )
             result["original_generated_text"] = gen_text
@@ -127,8 +115,8 @@ def predict(data: PromptData, ts_tool: str, back_ts_tool: str = None):
 
 
 @app.post("/predict")
-def _predict(data: PromptData):
-    return predict(data, DefaultTS.ts_tool, DefaultTS.back_ts_tool)
+def _predict(data: PromptData, request: Request):
+    return predict(data, request, DefaultTS.ts_tool, DefaultTS.back_ts_tool)
 
 
 @app.post("/translate/{ts_tool}")
@@ -144,7 +132,7 @@ def translate(data: PromptData, ts_tool: str):
             result = {}
             q_text = data.text
             translated_text = ts.translate_text(
-                q_text, translator=ts_tool, if_use_preacceleration=True
+                q_text, translator=ts_tool, if_use_preacceleration=False
             )
             result["original_text"] = data.text
             result["translator"] = ts_tool
