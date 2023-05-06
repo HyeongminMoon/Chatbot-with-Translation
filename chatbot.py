@@ -1,6 +1,7 @@
 import torch
 from fastapi import FastAPI, Request
 import translators as ts
+from translators.server import TranslatorError
 import json
 import os
 from datetime import datetime
@@ -76,6 +77,10 @@ def predict(data: PromptData, request: Request, ts_tool: str, back_ts_tool: str 
         return {"error": f"There is no matched name of translator. available:{ts_pool}"}
     if back_ts_tool is None:
         back_ts_tool = ts_tool
+    if data.text == "clear":
+        user_id = request.client.host
+        ChatbotMemory.clear_memory(user_id)
+        return {"info": "the model's memory is cleared."}
     try:
         user_id = request.client.host
         ori_lang = check_lang(data.text)
@@ -110,6 +115,20 @@ def predict(data: PromptData, request: Request, ts_tool: str, back_ts_tool: str 
         result["original_text"] = data.text
         save_result(result)
         return result
+    # except LangDetectException:
+    except TranslatorError:
+        user_id = request.client.host
+        ori_lang = check_lang(data.text)
+        result = {"info": "No features in text. Model uses original prompt automatically."}
+        history = ChatbotMemory.load_context(user_id)['history']
+        output = chat_chain.predict(human_input=data.text, history=history)
+        ChatbotMemory.save_context(user_id, data.text, output)
+        result["generated_text"] = output
+        result["generate_model"] = generate_model  
+        result["original_text"] = data.text
+        save_result(result)
+        return result
+
     except Exception as e:
         return {"error": repr(e)}
 

@@ -13,3 +13,7 @@ class ChatbotMemory:
     @classmethod
     def load_context(cls, user_id: str):
         return cls.memory[hash(user_id)].load_memory_variables({})
+
+    @classmethod
+    def clear_memory(cls, user_id: str):
+        cls.memory[hash(user_id)] = partial(ConversationBufferWindowMemory, k=2)
