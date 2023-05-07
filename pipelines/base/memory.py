@@ -16,4 +16,4 @@ class ChatbotMemory:
 
     @classmethod
     def clear_memory(cls, user_id: str):
-        cls.memory[hash(user_id)] = partial(ConversationBufferWindowMemory, k=2)
+        cls.memory[hash(user_id)] = ConversationBufferWindowMemory(k=2)
