@@ -67,7 +67,7 @@ def predict(data: PromptData, ts_tool: str, back_ts_tool: str = None):
         else:
             q_text = data.text
             ts_text = ts.translate_text(
-                q_text, translator=DefaultTS.ts_tool, if_use_preacceleration=True,
+                q_text, translator=DefaultTS.ts_tool, if_use_preacceleration=False,
                 to_language='en', timeout=10
             )
             result = instruct_pipeline({"text": ts_text})[0]
