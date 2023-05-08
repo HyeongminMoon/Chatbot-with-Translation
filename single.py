@@ -1,8 +1,8 @@
 from transformers import pipeline
 import torch
 from fastapi import FastAPI
-from pydantic import BaseModel
 import translators as ts
+from translators.server import TranslatorError
 import json
 import os
 from datetime import datetime
@@ -10,18 +10,12 @@ import string
 import random
 from langdetect import detect
 
+from pipelines.base.defines import DefaultTS, PromptData
+
 app = FastAPI()
 result_save_dir = "test_results"
 hash_candidates = string.ascii_letters + string.digits
 generate_model = "databricks/dolly-v2-12b"
-
-class DefaultTS():
-    ts_tool = "google"
-    back_ts_tool = "google"
-
-
-class PromptData(BaseModel):
-    text: str
 
 
 def check_lang(text: str):
@@ -52,17 +46,19 @@ def startup_event():
         trust_remote_code=True,
         device_map="auto",
     )
-    ts.preaccelerate()
+    # ts.preaccelerate()
     ts_pool = ts.translators_pool
     STARTUP = True
 
 
 @app.post("/predict/{ts_tool}")
-def predict(data: PromptData, ts_tool: str):
+def predict(data: PromptData, ts_tool: str, back_ts_tool: str = None):
     if not STARTUP:
         return {"error": "Sever is starting. It takes ~2min for optimization."}
     if ts_tool not in ts_pool:
         return {"error": f"There is no matched name of translator. available:{ts_pool}"}
+    if back_ts_tool is None:
+        back_ts_tool = ts_tool
     try:
         ori_lang = check_lang(data.text)
         if ori_lang == 'en':
@@ -77,7 +73,7 @@ def predict(data: PromptData, ts_tool: str):
             result = instruct_pipeline({"text": ts_text})[0]
             gen_text = result["generated_text"]
             ts_gen_text = ts.translate_text(
-                gen_text, translator=ts_tool, if_use_preacceleration=True,
+                gen_text, translator=ts_tool, if_use_preacceleration=False,
                 from_language='en', to_language=ori_lang, timeout=10
             )
             result["original_generated_text"] = gen_text
@@ -89,6 +85,14 @@ def predict(data: PromptData, ts_tool: str):
 
         result["detected_lang"] = ori_lang
         result["generate_model"] = generate_model  
+        result["original_text"] = data.text
+        save_result(result)
+        return result
+    except TranslatorError:
+        result = {"info": "No features in text. Model uses original prompt automatically."}
+        result = instruct_pipeline(data)[0]
+        # result["generated_text"]
+        result["generate_model"] = generate_model
         result["original_text"] = data.text
         save_result(result)
         return result
@@ -97,42 +101,8 @@ def predict(data: PromptData, ts_tool: str):
 
 
 @app.post("/predict")
-def predict(data: PromptData):
-    ts_tool = DefaultTS.ts_tool
-    back_ts_tool = DefaultTS.back_ts_tool
-    if not STARTUP:
-        return {"error": "Sever is starting. It takes ~2min for optimization."}
-    try:
-        ori_lang = check_lang(data.text)
-        if ori_lang == 'en':
-            result = instruct_pipeline(data)[0]
-            # result["generated_text"]
-        else:
-            q_text = data.text
-            ts_text = ts.translate_text(
-                q_text, translator=DefaultTS.ts_tool, if_use_preacceleration=True,
-                to_language='en', timeout=10
-            )
-            result = instruct_pipeline({"text": ts_text})[0]
-            gen_text = result["generated_text"]
-            ts_gen_text = ts.translate_text(
-                gen_text, translator=ts_tool, if_use_preacceleration=True,
-                from_language='en', to_language=ori_lang, timeout=10
-            )
-            result["original_generated_text"] = gen_text
-            result["generated_text"] = ts_gen_text
-            result["translator"] = ts_tool
-            result["back_translator"] = ts_tool
-            result["translated_text"] = ts_text
-            result["detected_lang"] = ori_lang
-
-        result["detected_lang"] = ori_lang
-        result["generate_model"] = generate_model  
-        result["original_text"] = data.text
-        save_result(result)
-        return result
-    except Exception as e:
-        return {"error": repr(e)}
+def _predict(data: PromptData):
+    return predict(data, DefaultTS.ts_tool, DefaultTS.back_ts_tool)
 
 
 @app.post("/translate/{ts_tool}")
@@ -148,7 +118,7 @@ def translate(data: PromptData, ts_tool: str):
             result = {}
             q_text = data.text
             translated_text = ts.translate_text(
-                q_text, translator=ts_tool, if_use_preacceleration=True
+                q_text, translator=ts_tool, if_use_preacceleration=False
             )
             result["original_text"] = data.text
             result["translator"] = ts_tool

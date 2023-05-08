@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class DefaultTS():
-    ts_tool = "papago"
+    ts_tool = "google"
     back_ts_tool = "google"
 
 
